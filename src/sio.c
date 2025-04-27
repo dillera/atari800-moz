@@ -515,7 +515,7 @@ int SIO_Mount(int diskno, const char *filename, int b_open_readonly)
 			info = (pro_additional_info_t *)Util_malloc(sizeof(pro_additional_info_t));
 			additional_info[diskno-1] = info;
 			info->count = (unsigned char *)Util_malloc(sectorcount[diskno - 1]);
-			memset(info->count, 0, sectorcount[diskno -1]);
+			memset(info->count, 0, sectorcount[diskno-1]);
 			info->max_sector = (file_length-16)/(128+12);
 		}
 		else {
@@ -1031,73 +1031,52 @@ int SIO_ReadStatusBlock(int unit, UBYTE *buffer)
 	return 'C';
 }
 
-/*
-   Status Request from Atari 400/800 Technical Reference Notes
-
-   DVSTAT + 0   Command Status
-   DVSTAT + 1   Hardware Status
-   DVSTAT + 2   Timeout
-   DVSTAT + 3   Unused
-
-   Command Status Bits
-
-   Bit 0 = 1 indicates an invalid command frame was received
-   Bit 1 = 1 indicates an invalid data frame was received
-   Bit 2 = 1 indicates that last read/write operation was unsuccessful
-   Bit 3 = 1 indicates that the diskette is write protected
-   Bit 4 = 1 indicates active/standby
-
-   plus
-
-   Bit 5 = 1 indicates double density
-   Bit 7 = 1 indicates dual density disk (1050 format)
- */
 int SIO_DriveStatus(int unit, UBYTE *buffer)
 {
-	if (BINLOAD_start_binloading) {
-		buffer[0] = 16 + 8;
-		buffer[1] = 255;
-		buffer[2] = 1;
-		buffer[3] = 0 ;
-		return 'C';
-	}
+    if (BINLOAD_start_binloading) {
+        buffer[0] = 16 + 8;
+        buffer[1] = 255;
+        buffer[2] = 1;
+        buffer[3] = 0 ;
+        return 'C';
+    }
 
-	if (SIO_drive_status[unit] == SIO_OFF)
-		return 0;
+    if (SIO_drive_status[unit] == SIO_OFF)
+        return 0;
 
-	/* .PRO contains status information in the sector header */
-	if (io_success[unit] != 0  && image_type[unit] == IMAGE_TYPE_PRO) {
-		int sector = io_success[unit];
-		SeekSector(unit, sector);
-		if (fread(buffer, 1, 4, disk[unit]) < 4) {
-			Log_print("SIO_DriveStatus: failed to read sector header");
-		}
-		return 'C';
-	}
-	else if (io_success[unit] != 0  && image_type[unit] == IMAGE_TYPE_VAPI &&
-			 SIO_drive_status[unit] != SIO_NO_DISK) {
-		vapi_additional_info_t *info;
-		info = (vapi_additional_info_t *)additional_info[unit];
-		buffer[0] = info->sec_stat_buff[0];
-		buffer[1] = info->sec_stat_buff[1];
-		buffer[2] = info->sec_stat_buff[2];
-		buffer[3] = info->sec_stat_buff[3];
-		Log_print("Drive Status unit %d %x %x %x %x",unit,buffer[0], buffer[1], buffer[2], buffer[3]);
-		return 'C';
-	}	
-	buffer[0] = 16;         /* drive active */
-	buffer[1] = disk[unit] != NULL ? 255 /* WD 177x OK */ : 127 /* no disk */;
-	if (io_success[unit] != 0)
-		buffer[0] |= 4;     /* failed RW-operation */
-	if (SIO_drive_status[unit] == SIO_READ_ONLY)
-		buffer[0] |= 8;     /* write protection */
-	if (SIO_format_sectorsize[unit] == 256)
-		buffer[0] |= 32;    /* double density */
-	if (SIO_format_sectorcount[unit] == 1040)
-		buffer[0] |= 128;   /* 1050 enhanced density */
-	buffer[2] = 1;
-	buffer[3] = 0;
-	return 'C';
+    /* .PRO contains status information in the sector header */
+    if (io_success[unit] != 0  && image_type[unit] == IMAGE_TYPE_PRO) {
+        int sector = io_success[unit];
+        SeekSector(unit, sector);
+        if (fread(buffer, 1, 4, disk[unit]) < 4) {
+            Log_print("SIO_DriveStatus: failed to read sector header");
+        }
+        return 'C';
+    }
+    else if (io_success[unit] != 0  && image_type[unit] == IMAGE_TYPE_VAPI &&
+             SIO_drive_status[unit] != SIO_NO_DISK) {
+        vapi_additional_info_t *info;
+        info = (vapi_additional_info_t *)additional_info[unit];
+        buffer[0] = info->sec_stat_buff[0];
+        buffer[1] = info->sec_stat_buff[1];
+        buffer[2] = info->sec_stat_buff[2];
+        buffer[3] = info->sec_stat_buff[3];
+        Log_print("Drive Status unit %d %x %x %x %x",unit,buffer[0], buffer[1], buffer[2], buffer[3]);
+        return 'C';
+    }   
+    buffer[0] = 16;         /* drive active */
+    buffer[1] = disk[unit] != NULL ? 255 /* WD 177x OK */ : 127 /* no disk */;
+    if (io_success[unit] != 0)
+        buffer[0] |= 4;     /* failed RW-operation */
+    if (SIO_drive_status[unit] == SIO_READ_ONLY)
+        buffer[0] |= 8;     /* write protection */
+    if (SIO_format_sectorsize[unit] == 256)
+        buffer[0] |= 32;    /* double density */
+    if (SIO_format_sectorcount[unit] == 1040)
+        buffer[0] |= 128;   /* 1050 enhanced density */
+    buffer[2] = 1;
+    buffer[3] = 0;
+    return 'C';
 }
 
 #ifndef NO_SECTOR_DELAY
@@ -1145,7 +1124,7 @@ void SIO_Handler(void)
 
 	if (MEMORY_dGetByte(0x300) != 0x60 && unit < SIO_MAX_DRIVES && (SIO_drive_status[unit] != SIO_OFF || BINLOAD_start_binloading)) {	/* UBYTE range ! */
 #ifdef DEBUG
-		Log_print("SIO disk command is %02x %02x %02x %02x %02x   %02x %02x %02x %02x %02x %02x",
+		Log_print("SIO disk command is %02x %02x %02x %02x %02x",
 			cmd, MEMORY_dGetByte(0x303), MEMORY_dGetByte(0x304), MEMORY_dGetByte(0x305), MEMORY_dGetByte(0x306),
 			MEMORY_dGetByte(0x308), MEMORY_dGetByte(0x309), MEMORY_dGetByte(0x30a), MEMORY_dGetByte(0x30b),
 			MEMORY_dGetByte(0x30c), MEMORY_dGetByte(0x30d));
@@ -1160,7 +1139,7 @@ void SIO_Handler(void)
 			else
 				result = 'E';
 			break;
-		case 0x4f:				/* Write Status Block */
+		case 0x4f:				/* Write status */
 			if (12 == length) {
 				MEMORY_CopyFromMem(data, DataBuffer, 12);
 				result = SIO_WriteStatusBlock(unit, DataBuffer);
@@ -1348,6 +1327,7 @@ static UBYTE Command_Frame(void)
 	int sector;
 	int realsize;
 	Log_print("sio: Command_Frame()");
+	Log_print("Command_Frame: Command=[%02X %02X %02X %02X %02X], TransferStatus=%d", CommandFrame[0], CommandFrame[1], CommandFrame[2], CommandFrame[3], CommandFrame[4], TransferStatus);
 
 	sector = CommandFrame[2] | (((UWORD) CommandFrame[3]) << 8);
 	unit = CommandFrame[0] - '1';
@@ -1421,29 +1401,28 @@ static UBYTE Command_Frame(void)
 			if (b != 0x43)
 				return 'E';       /* no complete, bail out */
 
-            /* read in the 128‐byte sector payload */
-            for (i = 0; i < 128; i++) {
-                netsio_recv_byte(&b);
-                DataBuffer[1 + i] = b;
-            }
+            /* Store the Complete byte first, as SIO expects it */
+			DataBuffer[0] = 0x43;
 
-            /* read the trailing checksum */
-            netsio_recv_byte(&b);
-            DataBuffer[1 + 128] = b;
+			/* read in the 128-byte sector payload */
+			for (i = 0; i < 128; i++) {
+				netsio_recv_byte(&b);
+				DataBuffer[1 + i] = b; /* Store data after Complete byte */
+			}
 
-            DataBuffer[0] = 'C';                    /* per SIO_DriveStatus() */
+			/* read the trailing checksum */
 			netsio_recv_byte(&b);
-            DataBuffer[5] = b;     /* final checksum */
+			DataBuffer[1 + 128] = b; /* Store checksum after data */
 
-            DataIndex      = 0;
-            ExpectedBytes  = 1 + 128 + 1;   /* code + 128 data + checksum */
-            TransferStatus = SIO_ReadFrame;
+			DataIndex = 0;
+			ExpectedBytes = 1 + 128 + 1; /* Complete + 128 data + checksum */
+			TransferStatus = SIO_ReadFrame;
 
-            POKEY_DELAYED_SERIN_IRQ = SIO_SERIN_INTERVAL << 2;
+			POKEY_DELAYED_SERIN_IRQ = SIO_SERIN_INTERVAL << 2;
 
-            SIO_last_op       = SIO_LAST_READ;
-            SIO_last_op_time  = 10;
-            SIO_last_drive    = unit + 1;
+			SIO_last_op       = SIO_LAST_READ;
+			SIO_last_op_time  = 10;
+			SIO_last_drive    = unit + 1;
 		}
 		else
 		{
@@ -1487,32 +1466,45 @@ static UBYTE Command_Frame(void)
 #endif
 		if (netsio_enabled)
 		{
-            UBYTE b;
+			UBYTE b;
 			int i = 0;
 
-            netsio_recv_byte(&b);
-            if (b != 0x41)
-                return 'E';       /* no ACK, bail out */
-
-            netsio_recv_byte(&b);
-            if (b != 0x43)
-                return 'E';       /* no complete, bail out */
-
-            for (i = 0; i < 4; i++) {
-				netsio_recv_byte(&b);
-                DataBuffer[1 + i] = b;
-            }
-
-            DataBuffer[0] = 'C';                    /* per SIO_DriveStatus() */
+			/* Removed incorrect reads for ACK and Complete:
 			netsio_recv_byte(&b);
-            DataBuffer[5] = b;     /* final checksum */
+			if (b != 0x41)
+				return 'E';
+			netsio_recv_byte(&b);
+			if (b != 0x43)
+				return 'E';
+			*/
 
-            DataIndex      = 0;
-            ExpectedBytes  = 6;                     /* 'C' + 4 data + checksum */
-            TransferStatus = SIO_ReadFrame;
+			/* Status response should be 'C' followed by 4 status bytes */
+			DataBuffer[0] = 'C'; /* Set Complete byte first */
+
+			/* Read the 4 status bytes directly from NetSIO pipe */
+			for (i = 0; i < 4; i++) {
+				netsio_recv_byte(&b);
+				DataBuffer[1 + i] = b; /* Store after Complete byte */
+			}
+
+			/* Set up buffer for SIO_GetByte */
+			DataIndex = 0;
+			ExpectedBytes = 1 + 4; /* Complete + 4 status bytes */
+			TransferStatus = SIO_ReadFrame;
+
+			POKEY_DELAYED_SERIN_IRQ = SIO_SERIN_INTERVAL; /* Standard delay for status? */
+
+			/* Update last operation info */
+			SIO_last_op = SIO_LAST_READ; /* Status is a type of read */
+			SIO_last_op_time = 10;
+			SIO_last_drive = unit + 1;
+
+			/* Return 'A' for Acknowledge, but SIO_GetByte will handle sending 'C' */
+			return 'A';
 		}
 		else
 		{
+			/* Original non-NetSIO status handling */
 			DataBuffer[0] = SIO_DriveStatus(unit, DataBuffer + 1);
 			DataBuffer[1 + 4] = SIO_ChkSum(DataBuffer + 1, 4);
 			DataIndex = 0;
@@ -1622,6 +1614,7 @@ static UBYTE WriteSectorBack(void)
 /* Put a byte that comes out of POKEY. So get it here... */
 void SIO_PutByte(int byte)
 {
+	Log_print("SIO_PutByte: byte=0x%02X, TransferStatus=%d, CommandIndex=%d, DataIndex=%d", byte, TransferStatus, CommandIndex, DataIndex);
 	switch (TransferStatus) {
 	case SIO_CommandFrame:
 		if (CommandIndex < ExpectedBytes) {
@@ -1681,6 +1674,7 @@ void SIO_PutByte(int byte)
 /* Get a byte from the floppy to the pokey. */
 int SIO_GetByte(void)
 {
+	Log_print("SIO_GetByte: TransferStatus=%d, DataIndex=%d, ExpectedBytes=%d", TransferStatus, DataIndex, ExpectedBytes);
 	int byte = 0;
 	uint8_t b;
 

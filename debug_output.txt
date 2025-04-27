@@ -1,0 +1,30 @@
+Using Atari800 config file: /Users/dillera/.atari800.cfg
+Created by Atari 800 Emulator, Version 5.2.0
+
+Keyboard mapped to emulated joystick 0
+Requested resolution 336x240 is not available, using 640x480 instead.
+Video Mode: 336x224x32 windowed, pixel format: BGR16
+OpenGL initialized successfully. Version: 2.1 Metal - 89.4
+OpenGL Pixel Buffer Objects not available.
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
+sio: SIO_Handler()
