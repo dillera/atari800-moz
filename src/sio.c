@@ -1562,11 +1562,11 @@ static UBYTE Command_Frame(void)
 			UBYTE b;
 			netsio_recv_byte(&b);
 			if (b != 0x41)
-				return;       /* no ACK, bail out */
+				return 'N';       /* no ACK, bail out */
 
 			netsio_recv_byte(&b);
 			if (b != 0x43)
-				return;       /* no complete, bail out */
+				return 'N';       /* no complete, bail out */
 
 			netsio_recv_byte(&b);
 			DataBuffer[1] = b;
@@ -1633,11 +1633,11 @@ static UBYTE Command_Frame_FN_Fuji(void)
 			UBYTE b;
 			netsio_recv_byte(&b);
 			if (b != 0x41)
-				return;       /* no ACK, bail out */
+				return 'N';       /* no ACK, bail out */
 
 			netsio_recv_byte(&b);
 			if (b != 0x43)
-				return;       /* no complete, bail out */
+				return 'N';       /* no complete, bail out */
 
 			DataBuffer[0] = 'C';                    /* per SIO_DriveStatus() */
 
@@ -1660,11 +1660,11 @@ static UBYTE Command_Frame_FN_Fuji(void)
 			UBYTE b;
 			netsio_recv_byte(&b);
 			if (b != 0x41)
-				return;       /* no ACK, bail out */
+				return 'N';       /* no ACK, bail out */
 
 			netsio_recv_byte(&b);
 			if (b != 0x43)
-				return;       /* no complete, bail out */
+				return 'N';       /* no complete, bail out */
 
 			netsio_recv_byte(&b);
 			DataBuffer[1] = b;
@@ -1729,11 +1729,11 @@ static UBYTE Command_Frame_FN_Fuji(void)
 
 			netsio_recv_byte(&b);
 			if (b != 0x41)
-				return;       /* no ACK, bail out */
+				return 'N';       /* no ACK, bail out */
 
 			netsio_recv_byte(&b);
 			if (b != 0x43)
-				return;       /* no complete, bail out */
+				return 'N';       /* no complete, bail out */
 
 			/* read in the N‐byte payload */
 			for (i = 0; i < n; i++) {
